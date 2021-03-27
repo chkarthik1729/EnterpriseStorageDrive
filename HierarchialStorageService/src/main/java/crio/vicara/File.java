@@ -1,16 +1,20 @@
 package crio.vicara;
 
+import org.bson.codecs.pojo.annotations.BsonId;
+
+import java.util.List;
+
 public class File {
 
-    private final HierarchialStorageProvider storage;
-
-    public File(HierarchialStorageProvider storage) {
-        this.storage = storage;
+    public File() {
     }
 
     private String fileName;
 
+    @BsonId
     private String fileId;
+
+    private List<ChildFile> children;
 
     private String path;
 
@@ -24,20 +28,20 @@ public class File {
 
     private long length;
 
+    public List<ChildFile> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<ChildFile> children) {
+        this.children = children;
+    }
+
     public long getLength() {
         return length;
     }
 
     public void setLength(long length) {
         this.length = length;
-    }
-
-    File getParent() {
-        return storage.getFile(parentId);
-    }
-
-    public HierarchialStorageProvider getStorage() {
-        return storage;
     }
 
     public String getFileName() {
@@ -54,18 +58,6 @@ public class File {
 
     public void setFileId(String fileId) {
         this.fileId = fileId;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public boolean isFile() {
-        return !isDirectory;
     }
 
     public boolean isDirectory() {

@@ -6,17 +6,18 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import crio.vicara.FlatStorageProvider;
-import crio.vicara.StorageProviderDetails;
+import crio.vicara.FlatStorageSystem;
+import crio.vicara.StorageServiceDetails;
 
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Date;
 
-public class AmazonSimpleStorageService implements FlatStorageProvider {
+public class AmazonSimpleStorageService implements FlatStorageSystem {
 
     private static final AmazonSimpleStorageService instance = new AmazonSimpleStorageService();
 
+    private static StorageServiceDetails storageProviderDetails;
     private static AmazonS3 s3Client;
     private static final String bucketName = "crio-do-vicara-t7";
 
@@ -26,6 +27,13 @@ public class AmazonSimpleStorageService implements FlatStorageProvider {
                 .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
                 .withRegion("ap-south-1")
                 .build();
+
+        storageProviderDetails = StorageServiceDetails
+                .with()
+                .name("Amazon Simple Storage Service")
+                .hyphenatedName("amazon-s3")
+                .websiteUrl("https://aws.amazon.com/s3/")
+                .logoUrl("https://d1.awsstatic.com/icons/jp/console_s3_icon.64795d08c5e23e92c12fe08c2dd5bd99255af047.png");
     }
 
     public static AmazonSimpleStorageService getInstance() {
@@ -33,9 +41,8 @@ public class AmazonSimpleStorageService implements FlatStorageProvider {
     }
 
     @Override
-    public StorageProviderDetails getStorageProviderDetails() {
-        //TODO: Read from Config Files
-        return null;
+    public StorageServiceDetails getStorageProviderDetails() {
+        return storageProviderDetails;
     }
 
     @Override

@@ -6,9 +6,9 @@ import java.net.URL;
 /**
  * Represents a StorageProvider that provides Flat Storage Structure
  */
-public interface FlatStorageProvider {
+public interface FlatStorageSystem {
 
-    StorageProviderDetails getStorageProviderDetails();
+    StorageServiceDetails getStorageProviderDetails();
 
     void putObject(String key, InputStream inputStream, long contentLength);
 
