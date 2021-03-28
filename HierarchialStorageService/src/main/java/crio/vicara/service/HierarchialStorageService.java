@@ -2,6 +2,7 @@ package crio.vicara.service;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import crio.vicara.*;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -28,6 +29,15 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
                 .getStorageProviderDetails()
                 .getHyphenatedName();
 
+        var mongoClient = configureAndGetMongoClient();
+        var mongoDatabase = mongoClient.getDatabase(databaseName);
+        var fileTreeCollection = mongoDatabase.getCollection("file-tree", File.class);
+
+        mongoDao = new MongoDataAccessObject(fileTreeCollection);
+        rootId = mongoDao.addToFileCollection(createFile(null, "Root", true));
+    }
+
+    private static MongoClient configureAndGetMongoClient() {
         var connectionString = new ConnectionString("mongodb://localhost");
         var pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
         var codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), pojoCodecRegistry);
@@ -35,13 +45,7 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
                 .applyConnectionString(connectionString)
                 .codecRegistry(codecRegistry)
                 .build();
-
-        var mongoClient = MongoClients.create(clientSettings);
-        var mongoDatabase = mongoClient.getDatabase(databaseName);
-        var fileTreeCollection = mongoDatabase.getCollection("file-tree", File.class);
-
-        mongoDao = new MongoDataAccessObject(fileTreeCollection);
-        rootId = mongoDao.addToFileCollection(createFile(null, "Root", true));
+        return MongoClients.create(clientSettings);
     }
 
     public static HierarchialStorageService with(FlatStorageSystem provider) {
