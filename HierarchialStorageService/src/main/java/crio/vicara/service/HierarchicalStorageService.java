@@ -11,18 +11,19 @@ import org.bson.types.ObjectId;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NotDirectoryException;
 import java.util.List;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
-public class HierarchialStorageService implements HierarchialStorageSystem {
+public class HierarchicalStorageService implements HierarchicalStorageSystem {
 
     private final FlatStorageSystem flatStorageSystem;
     private final MongoDataAccessObject mongoDao;
-    private final String rootId;
+    private String rootId;
 
-    private HierarchialStorageService(FlatStorageSystem provider) {
+    private HierarchicalStorageService(FlatStorageSystem provider) {
         this.flatStorageSystem = provider;
 
         var databaseName = flatStorageSystem
@@ -31,10 +32,10 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
 
         var mongoClient = configureAndGetMongoClient();
         var mongoDatabase = mongoClient.getDatabase(databaseName);
-        var fileTreeCollection = mongoDatabase.getCollection("file-tree", File.class);
+        var fileTreeCollection = mongoDatabase.getCollection("fileTree", File.class);
 
         mongoDao = new MongoDataAccessObject(fileTreeCollection);
-        rootId = mongoDao.addToFileCollection(createFile(null, "Root", true));
+        rootId = mongoDao.addFile(createFile(null, "Root", true));
     }
 
     private static MongoClient configureAndGetMongoClient() {
@@ -48,8 +49,8 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
         return MongoClients.create(clientSettings);
     }
 
-    public static HierarchialStorageService with(FlatStorageSystem provider) {
-        return new HierarchialStorageService(provider);
+    public static HierarchicalStorageService with(FlatStorageSystem provider) {
+        return new HierarchicalStorageService(provider);
     }
 
     @Override
@@ -71,23 +72,25 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
     @Override
     public void delete(String fileId) {
         // Can't delete root folder
-        if (fileId.equals(rootId)) return;
+        if (rootId.equals(fileId)) return;
 
         File file = mongoDao.findFile(fileId);
-        if (file.getParentId() != null)
-            mongoDao.deleteChildFromParent(file.getParentId(), file.getFileName());
-        deleteRecurse(file);
 
-        mongoDao.updateLastModified(file.getParentId(), System.currentTimeMillis());
+        if (file.getParentId() != null) {
+            mongoDao.deleteChildFromParent(file.getParentId(), file.getFileName());
+            mongoDao.updateLastModified(file.getParentId(), System.currentTimeMillis());
+        }
+
+        deleteRecurse(file);
     }
 
     private void deleteRecurse(File file) {
-        flatStorageSystem.deleteObject(file.getFileId());
+        if (file.isDirectory())
+            file.getChildren().forEach(
+                            child -> deleteRecurse(mongoDao.findFile(child.getFileId()))
+                    );
+        else flatStorageSystem.deleteObject(file.getFileId());
         mongoDao.delete(file.getFileId());
-
-        for (ChildFile child : file.getChildren()) {
-            deleteRecurse(mongoDao.findFile(child.getFileId()));
-        }
     }
 
     @Override
@@ -96,23 +99,29 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
     }
 
     @Override
-    public void move(String fromId, String toId, boolean forced) {
-        File file = mongoDao.findFile(fromId);
-        ChildFile duplicateChildFile = mongoDao.findChildInParent(toId, file.getFileName());
+    public void move(String sourceId, String destinationId, boolean forced) throws FileAlreadyExistsException, NotDirectoryException {
+        File destinationFile = mongoDao.findFile(destinationId);
+        if (!destinationFile.isDirectory())
+            throw new NotDirectoryException("Destination is not a directory");
 
-        if (duplicateChildFile != null) {
-            if (forced) {
-                delete(duplicateChildFile.getFileId());
-                mongoDao.deleteChildFromParent(toId, duplicateChildFile.getFileName());
-                mongoDao.updateLastModified(toId, System.currentTimeMillis());
-            } else return;
+        File sourceFile = mongoDao.findFile(sourceId);
+
+        ChildFile duplicateFileInDestination = mongoDao.findChildInParent(destinationId, sourceFile.getFileName());
+
+        if (duplicateFileInDestination != null) {
+            if (forced) delete(duplicateFileInDestination.getFileId());
+            else throw new FileAlreadyExistsException("A file with the same name in destination folder already exists");
         }
 
-        mongoDao.deleteChildFromParent(file.getParentId(), file.getFileName());
-        mongoDao.updateLastModified(file.getParentId(), System.currentTimeMillis());
-        ChildFile currFileChildVersion = createChildFile(file.getFileId(), file.getFileName(), file.isDirectory());
-        mongoDao.addChildFileToParent(file.getParentId(), currFileChildVersion);
-        mongoDao.updateLastModified(file.getParentId(), System.currentTimeMillis());
+        // Delete source from its parent
+        mongoDao.deleteChildFromParent(sourceFile.getParentId(), sourceFile.getFileName());
+        mongoDao.updateLastModified(sourceFile.getParentId(), System.currentTimeMillis());
+
+        // Add source to destination
+        ChildFile sourceFileChildVersion = createChildFile(sourceFile.getFileId(), sourceFile.getFileName(), sourceFile.isDirectory());
+        mongoDao.addChildFileToParent(destinationFile.getFileId(), sourceFileChildVersion);
+        mongoDao.updateParentId(sourceId, destinationId);
+        mongoDao.updateLastModified(destinationFile.getFileId(), System.currentTimeMillis());
     }
 
     @Override
@@ -150,6 +159,32 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
         return flatStorageSystem.getObject(fileId);
     }
 
+    @Override
+    public long getLength(String fileId) {
+        File file = mongoDao.findFile(fileId);
+
+        if (file.isDirectory()) {
+            long totalLength = 0;
+            for (ChildFile childFile: file.getChildren())
+                totalLength += getLength(childFile.getFileId());
+            return totalLength;
+        }
+
+        return flatStorageSystem.getLength(fileId);
+    }
+
+    @Override
+    public boolean exists(String fileId) {
+        return mongoDao.findFile(fileId) != null;
+    }
+
+    @Override
+    public void clearAll() {
+        mongoDao.clearAllDocuments();
+        flatStorageSystem.clearAll();
+        rootId = mongoDao.addFile(createFile(null, "Root", true));
+    }
+
     private void ensureSameFileNameDoesNotExist(String parentId, String fileName) throws FileAlreadyExistsException {
         ChildFile otherFile = mongoDao.findChildInParent(parentId, fileName);
         if (otherFile != null) throw new FileAlreadyExistsException("A file with the name already exists");
@@ -159,7 +194,7 @@ public class HierarchialStorageService implements HierarchialStorageSystem {
         ensureSameFileNameDoesNotExist(file.getParentId(), file.getFileName());
         ChildFile childFile = createChildFile(file.getFileId(), file.getFileName(), file.isDirectory());
         mongoDao.addChildFileToParent(file.getParentId(), childFile);
-        return mongoDao.addToFileCollection(file);
+        return mongoDao.addFile(file);
     }
 
     ChildFile createChildFile(String fileId, String fileName, boolean isDirectory) {
