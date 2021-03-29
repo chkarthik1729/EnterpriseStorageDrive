@@ -3,6 +3,7 @@ package crio.vicara;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NotDirectoryException;
 import java.util.List;
 
 /**
@@ -20,7 +21,7 @@ public interface HierarchialStorageSystem {
 
     List<ChildFile> listChildren(String fileId);
 
-    void move(String fromId, String toId, boolean forced);
+    void move(String fromId, String toId, boolean forced) throws FileAlreadyExistsException, NotDirectoryException;
 
     void rename(String fileId, String newName) throws FileAlreadyExistsException;
 
@@ -31,4 +32,10 @@ public interface HierarchialStorageSystem {
     URL downloadableFileURL(String fileId, long urlExpirySeconds);
 
     InputStream downloadFile(String fileId);
+
+    long getLength(String fileId);
+
+    boolean exists(String fileId);
+
+    void clearAll();
 }

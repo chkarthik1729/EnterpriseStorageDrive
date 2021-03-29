@@ -5,6 +5,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import crio.vicara.FlatStorageSystem;
 import crio.vicara.StorageServiceDetails;
@@ -80,5 +81,28 @@ public class AmazonSimpleStorageService implements FlatStorageSystem {
                 .withMethod(HttpMethod.GET)
                 .withExpiration(expiresAt);
         return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+    }
+
+    @Override
+    public long getLength(String fileId) {
+        return s3Client.getObjectMetadata(bucketName, fileId).getContentLength();
+    }
+
+    @Override
+    public boolean exists(String fileId) {
+        return s3Client.doesObjectExist(bucketName, fileId);
+    }
+
+    @Override
+    public void clearAll() {
+        ObjectListing objectListing = s3Client.listObjects(bucketName);
+        while (objectListing.isTruncated()) {
+            objectListing
+                    .getObjectSummaries()
+                    .forEach(
+                            s3ObjectSummary -> s3Client.deleteObject(bucketName, s3ObjectSummary.getKey())
+                    );
+            objectListing = s3Client.listNextBatchOfObjects(objectListing);
+        }
     }
 }
