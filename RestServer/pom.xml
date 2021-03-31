@@ -8,11 +8,13 @@
 		<version>2.4.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+
 	<groupId>do.crio</groupId>
-	<artifactId>vicara</artifactId>
+	<artifactId>rest-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Vicara-T7</name>
-	<description>Storage Drive For Enterprises</description>
+	<description>Storage Drive Service For Enterprises</description>
+
 	<properties>
 		<java.version>11</java.version>
 	</properties>
@@ -26,6 +28,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>do.crio</groupId>
+			<artifactId>hierarchial-storage-service</artifactId>
+			<version>1.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
