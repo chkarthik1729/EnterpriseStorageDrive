@@ -32,7 +32,7 @@
 
 		<dependency>
 			<groupId>do.crio</groupId>
-			<artifactId>hierarchial-storage-service</artifactId>
+			<artifactId>hierarchical-storage-service</artifactId>
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
