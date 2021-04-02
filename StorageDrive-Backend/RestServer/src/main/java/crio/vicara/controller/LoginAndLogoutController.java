@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import java.nio.file.FileAlreadyExistsException;
 
 @Validated
 @RestController
@@ -18,7 +19,7 @@ public class LoginAndLogoutController {
     @Autowired UserService userService;
 
     @PostMapping("/register")
-    public void registerUser(@RequestBody @Valid User user) {
+    public void registerUser(@RequestBody @Valid User user) throws FileAlreadyExistsException {
         userService.registerUser(user);
     }
 

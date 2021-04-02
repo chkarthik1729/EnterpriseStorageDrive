@@ -1,4 +1,4 @@
-package crio.vicara.user;
+package crio.vicara.service.permission;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.ConnectionString;
@@ -13,28 +13,22 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 @Component
-public class UserDao {
+public class PermissionsDao {
 
-    MongoCollection<User> userCollection;
+    private final MongoCollection<FilePermissions> mongoCollection;
 
-    UserDao() {
+    public PermissionsDao() {
         var mongoClient = configureAndGetMongoClient();
         var mongoDatabase = mongoClient.getDatabase("rest-server");
-        userCollection = mongoDatabase.getCollection("users", User.class);
+        mongoCollection = mongoDatabase.getCollection("filePermissions", FilePermissions.class);
     }
 
-    public void save(User user) {
-        userCollection.insertOne(user);
+    public void savePermissions(FilePermissions permissions) {
+        mongoCollection.insertOne(permissions);
     }
 
-    public boolean existsEmail(String email) {
-        BasicDBObject filter = new BasicDBObject("_id", email);
-        return userCollection.find(filter).first() != null;
-    }
-
-    public User findByEmail(String email) {
-        BasicDBObject filter = new BasicDBObject("_id", email);
-        return userCollection.find(filter).first();
+    public FilePermissions getPermissions(String fileId) {
+        return mongoCollection.find(new BasicDBObject("_id", fileId)).first();
     }
 
     private static MongoClient configureAndGetMongoClient() {

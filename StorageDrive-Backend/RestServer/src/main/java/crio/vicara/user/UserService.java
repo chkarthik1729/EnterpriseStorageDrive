@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.nio.file.FileAlreadyExistsException;
 import java.util.List;
 
 @Component
@@ -19,7 +20,7 @@ public class UserService implements UserDetailsService {
     @Autowired StorageManager storageManager;
     @Autowired UserDao userDao;
 
-    public void registerUser(User user) {
+    public void registerUser(User user) throws FileAlreadyExistsException {
         if (userDao.existsEmail(user.getEmail())) {
             throw new UsernameAlreadyTakenException("Email already taken");
         }
@@ -36,6 +37,7 @@ public class UserService implements UserDetailsService {
             throw new UnrecognizedStorageProviderException();
         }
 
+        storageManager.createUserRootFolder(user.getEmail(), user.getStorageProvider());
         userDao.save(user);
     }
 

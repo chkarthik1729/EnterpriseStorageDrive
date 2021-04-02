@@ -2,8 +2,12 @@ package crio.vicara.service;
 
 import crio.vicara.HierarchicalStorageSystem;
 import crio.vicara.StorageServiceDetails;
+import crio.vicara.service.permission.PermissionManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
@@ -16,13 +20,16 @@ public class StorageManager {
     private List<HierarchicalStorageSystem> storageSystems = new ArrayList<>();
     private HierarchicalStorageSystem defaultStorageSystem;
 
+    @Autowired
+    PermissionManager permissionManager;
+
     public StorageManager() {
         storageSystems.add(
                 HierarchicalStorageService
                         .with(AmazonSimpleStorageService.getInstance())
         );
 
-        // Add Azure Blob Storage
+        //TODO: Add Azure Blob Storage
 
         defaultStorageSystem = storageSystems.get(0);
     }
@@ -51,35 +58,99 @@ public class StorageManager {
         return storageServiceProvidersDetails;
     }
 
-    public String createUserFolder(String folderName, String storageProviderName) throws FileAlreadyExistsException {
+    public String createUserRootFolder(String userEmail, String storageProviderName) throws FileAlreadyExistsException {
         var storageSystem = findByName(storageProviderName);
-        var originalFileId = storageSystem.createDirectory(null, folderName);
-        return encodeFileWithStorageProvider(originalFileId, storageProviderName);
+        var originalFileId = storageSystem.createDirectory(null, userEmail);
+        var finalFileId = encodeFileWithStorageProvider(originalFileId, storageProviderName);
+        permissionManager.addNewFile(null, finalFileId, userEmail);
+        return finalFileId;
     }
 
-    public String createFolder(String parentId, String folderName) throws FileAlreadyExistsException {
+    public String createFolderInsideUserRootFolder(String folderName,
+                                                   String storageProviderName,
+                                                   String userEmail) throws FileAlreadyExistsException {
+        var storageSystem = findByName(storageProviderName);
+        var userRootFolderId = storageSystem.getFileIdByName(null, userEmail);
+        var originalFileId = storageSystem.createDirectory(userRootFolderId, folderName);
+        var finalFileId = encodeFileWithStorageProvider(originalFileId, storageProviderName);
+        permissionManager.addNewFile(encodeFileWithStorageProvider(userRootFolderId, storageProviderName), finalFileId, userEmail);
+        return finalFileId;
+    }
+
+    public String createFolder(String parentId, String folderName, String userEmail) throws FileAlreadyExistsException {
+        if (!permissionManager.hasWriteAccess(parentId, userEmail));
+            // TODO: Throw new Unauthorized exception
         var storageProviderName = decodeStorageProviderName(parentId);
         var storageSystem = findByName(storageProviderName);
         var originalParentId = decodeOriginalFileIdInsideStorageProvider(parentId);
         var originalFileId = storageSystem.createDirectory(originalParentId, folderName);
+        var finalFileId = encodeFileWithStorageProvider(originalFileId, storageProviderName);
+        permissionManager.addNewFile(parentId, finalFileId, userEmail);
+        return finalFileId;
+    }
+
+    public String uploadFileInsideUserRootFolder(String fileName,
+                                                 InputStream stream,
+                                                 long length,
+                                                 String storageProviderName,
+                                                 String userEmail) throws FileAlreadyExistsException {
+
+        var storageSystem = findByName(storageProviderName);
+        var userRootFolderId = storageSystem.getFileIdByName(null, userEmail);
+        var originalFileId = storageSystem.uploadFile(null, fileName, stream, length);
+        var finalFileId = encodeFileWithStorageProvider(originalFileId, storageProviderName);
+        permissionManager.addNewFile(encodeFileWithStorageProvider(userRootFolderId, storageProviderName), finalFileId, userEmail);
+        return finalFileId;
+    }
+
+    public String uploadFile(String parentId, String fileName, InputStream stream, long length, String userEmail) throws FileAlreadyExistsException {
+        if (!permissionManager.hasWriteAccess(parentId, userEmail));
+            // TODO: Throw new Unauthorized exception
+        var storageProviderName =  decodeStorageProviderName(parentId);
+        var storageSystem = findByName(storageProviderName);
+        var originalParentId = decodeOriginalFileIdInsideStorageProvider(parentId);
+        var originalFileId = storageSystem.uploadFile(parentId, fileName, stream, length);
         return encodeFileWithStorageProvider(originalFileId, storageProviderName);
     }
 
-    public void deleteFile(String fileId) {
+    /**
+     * Deletes fileId if the userEmail has write access on that fileId
+     * @param fileId
+     * @param userEmail
+     */
+    public void deleteFile(String fileId, String userEmail) {
+        if (!permissionManager.hasWriteAccess(fileId, userEmail));
+            // TODO: Throw new Unauthorized exception
         var storageProviderName = decodeStorageProviderName(fileId);
         var storageSystem = findByName(storageProviderName);
         var originalFileId = decodeOriginalFileIdInsideStorageProvider(fileId);
         storageSystem.delete(originalFileId);
     }
 
+    /**
+     * Gets storage provider name from fileId
+     * @param fileId
+     * @return
+     */
     private static String decodeStorageProviderName(String fileId) {
         return new String(Base64.getDecoder().decode(fileId)).split(":")[0];
     }
 
+    /**
+     * Gets original fileId in the storage provider by decoding this fileId
+     * @param fileId
+     * @return
+     */
     private static String decodeOriginalFileIdInsideStorageProvider(String fileId) {
         return new String(Base64.getDecoder().decode(fileId)).split(":")[1];
     }
 
+    /**
+     * Encodes this fileId and storage provider to create a unique fileId for end user
+     * @param fileId
+     * @param storageProvider
+     * @return
+     */
     private static String encodeFileWithStorageProvider(String fileId, String storageProvider) {
         return Base64.getEncoder().encodeToString((fileId + ":" + storageProvider).getBytes(StandardCharsets.UTF_8));
     }
