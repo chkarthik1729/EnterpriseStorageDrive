@@ -3,6 +3,7 @@ package crio.vicara;
 import crio.vicara.service.AmazonSimpleStorageService;
 import crio.vicara.service.HierarchicalStorageService;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -151,7 +152,7 @@ public class HierarchicalStorageServiceTest {
                 () -> storageService.uploadFile(rootId, file.getName(), stream2)
         );
 
-        assertDoesNotThrow(() -> storageService.uploadFile(rootId, "test1.txt", stream2));
+        Assertions.assertDoesNotThrow(() -> storageService.uploadFile(rootId, "test1.txt", stream2));
     }
 
     @Test
@@ -205,5 +206,13 @@ public class HierarchicalStorageServiceTest {
 
         Thread.sleep(5000);
         assertThrows(IOException.class, downloadURL::openStream);
+    }
+
+    @Test
+    public void testGetFileIdByName() throws FileAlreadyExistsException {
+        String test1Id = storageService.createDirectory(null, "Test1");
+        assertEquals(test1Id, storageService.getFileIdByName(null, "Test1"));
+        String test2Id = storageService.createDirectory(test1Id, "Test2");
+        assertEquals(test2Id, storageService.getFileIdByName(test1Id, "Test2"));
     }
 }

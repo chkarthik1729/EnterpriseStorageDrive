@@ -70,6 +70,13 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
     }
 
     @Override
+    public String getFileIdByName(String parentId, String fileName) {
+        if (parentId == null)
+            parentId = rootId;
+        return mongoDao.findChildInParent(parentId, fileName).getFileId();
+    }
+
+    @Override
     public void delete(String fileId) {
         // Can't delete root folder
         if (rootId.equals(fileId)) return;

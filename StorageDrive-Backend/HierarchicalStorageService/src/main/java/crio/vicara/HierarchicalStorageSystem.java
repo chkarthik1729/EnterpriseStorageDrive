@@ -19,6 +19,8 @@ public interface HierarchicalStorageSystem {
 
     void delete(String fileId);
 
+    String getFileIdByName(String parentId, String fileName);
+
     List<ChildFile> listChildren(String fileId);
 
     void move(String fromId, String toId, boolean forced) throws FileAlreadyExistsException, NotDirectoryException;
