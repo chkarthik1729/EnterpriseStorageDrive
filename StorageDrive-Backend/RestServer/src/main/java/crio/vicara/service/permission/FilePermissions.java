@@ -2,6 +2,7 @@ package crio.vicara.service.permission;
 
 import org.bson.codecs.pojo.annotations.BsonId;
 
+import java.io.File;
 import java.util.List;
 
 public class FilePermissions {
