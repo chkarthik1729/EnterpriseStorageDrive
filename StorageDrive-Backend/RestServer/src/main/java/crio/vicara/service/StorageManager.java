@@ -2,6 +2,7 @@ package crio.vicara.service;
 
 import crio.vicara.HierarchicalStorageSystem;
 import crio.vicara.StorageServiceDetails;
+import crio.vicara.exception.UnauthorizedException;
 import crio.vicara.service.permission.PermissionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -78,8 +79,8 @@ public class StorageManager {
     }
 
     public String createFolder(String parentId, String folderName, String userEmail) throws FileAlreadyExistsException {
-        if (!permissionManager.hasWriteAccess(parentId, userEmail));
-            // TODO: Throw new Unauthorized exception
+        if (!permissionManager.hasWriteAccess(parentId, userEmail))
+            throw new UnauthorizedException();
         var storageProviderName = decodeStorageProviderName(parentId);
         var storageSystem = findByName(storageProviderName);
         var originalParentId = decodeOriginalFileIdInsideStorageProvider(parentId);
@@ -97,15 +98,15 @@ public class StorageManager {
 
         var storageSystem = findByName(storageProviderName);
         var userRootFolderId = storageSystem.getFileIdByName(null, userEmail);
-        var originalFileId = storageSystem.uploadFile(null, fileName, stream, length);
+        var originalFileId = storageSystem.uploadFile(userRootFolderId, fileName, stream, length);
         var finalFileId = encodeFileWithStorageProvider(originalFileId, storageProviderName);
         permissionManager.addNewFile(encodeFileWithStorageProvider(userRootFolderId, storageProviderName), finalFileId, userEmail);
         return finalFileId;
     }
 
     public String uploadFile(String parentId, String fileName, InputStream stream, long length, String userEmail) throws FileAlreadyExistsException {
-        if (!permissionManager.hasWriteAccess(parentId, userEmail));
-            // TODO: Throw new Unauthorized exception
+        if (!permissionManager.hasWriteAccess(parentId, userEmail))
+            throw new UnauthorizedException();
         var storageProviderName =  decodeStorageProviderName(parentId);
         var storageSystem = findByName(storageProviderName);
         var originalParentId = decodeOriginalFileIdInsideStorageProvider(parentId);
@@ -119,12 +120,39 @@ public class StorageManager {
      * @param userEmail
      */
     public void deleteFile(String fileId, String userEmail) {
-        if (!permissionManager.hasWriteAccess(fileId, userEmail));
-            // TODO: Throw new Unauthorized exception
+        if (!permissionManager.hasWriteAccess(fileId, userEmail))
+            throw new UnauthorizedException();
         var storageProviderName = decodeStorageProviderName(fileId);
         var storageSystem = findByName(storageProviderName);
         var originalFileId = decodeOriginalFileIdInsideStorageProvider(fileId);
         storageSystem.delete(originalFileId);
+    }
+
+    public Object getFileOrFolder(String fileId, String userEmail) {
+        var storageProviderName = decodeStorageProviderName(fileId);
+        var storageSystem = findByName(storageProviderName);
+        var originalFileId = decodeOriginalFileIdInsideStorageProvider(fileId);
+
+        if (permissionManager.isOwner(fileId, userEmail)) {
+            return storageSystem.downloadableFileURL(originalFileId, 3600);
+        } else if (permissionManager.hasReadAccess(fileId, userEmail)) {
+            return storageSystem.downloadFile(originalFileId);
+        }
+        throw new UnauthorizedException();
+    }
+
+    public String getFileName(String fileId) {
+        var storageProviderName = decodeStorageProviderName(fileId);
+        var storageSystem = findByName(storageProviderName);
+        var originalFileId = decodeOriginalFileIdInsideStorageProvider(fileId);
+        return storageSystem.getFile(originalFileId).getFileName();
+    }
+
+    public long getLength(String fileId) {
+        var storageProviderName = decodeStorageProviderName(fileId);
+        var storageSystem = findByName(storageProviderName);
+        var originalFileId = decodeOriginalFileIdInsideStorageProvider(fileId);
+        return storageSystem.getLength(originalFileId);
     }
 
     /**
@@ -132,8 +160,8 @@ public class StorageManager {
      * @param fileId
      * @return
      */
-    private static String decodeStorageProviderName(String fileId) {
-        return new String(Base64.getDecoder().decode(fileId)).split(":")[0];
+    public static String decodeStorageProviderName(String fileId) {
+        return new String(Base64.getDecoder().decode(fileId), StandardCharsets.UTF_8).split(":")[0];
     }
 
     /**
@@ -141,8 +169,8 @@ public class StorageManager {
      * @param fileId
      * @return
      */
-    private static String decodeOriginalFileIdInsideStorageProvider(String fileId) {
-        return new String(Base64.getDecoder().decode(fileId)).split(":")[1];
+    public static String decodeOriginalFileIdInsideStorageProvider(String fileId) {
+        return new String(Base64.getDecoder().decode(fileId), StandardCharsets.UTF_8).split(":")[1];
     }
 
     /**
@@ -151,8 +179,8 @@ public class StorageManager {
      * @param storageProvider
      * @return
      */
-    private static String encodeFileWithStorageProvider(String fileId, String storageProvider) {
-        return Base64.getEncoder().encodeToString((fileId + ":" + storageProvider).getBytes(StandardCharsets.UTF_8));
+    public static String encodeFileWithStorageProvider(String fileId, String storageProvider) {
+        return Base64.getEncoder().encodeToString((storageProvider + ":" + fileId).getBytes(StandardCharsets.UTF_8));
     }
 }
 

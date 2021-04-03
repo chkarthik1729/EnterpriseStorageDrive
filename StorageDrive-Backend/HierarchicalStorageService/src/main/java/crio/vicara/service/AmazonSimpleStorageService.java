@@ -96,13 +96,15 @@ public class AmazonSimpleStorageService implements FlatStorageSystem {
     @Override
     public void clearAll() {
         ObjectListing objectListing = s3Client.listObjects(bucketName);
-        while (objectListing.isTruncated()) {
+        while (true) {
             objectListing
                     .getObjectSummaries()
                     .forEach(
                             s3ObjectSummary -> s3Client.deleteObject(bucketName, s3ObjectSummary.getKey())
                     );
-            objectListing = s3Client.listNextBatchOfObjects(objectListing);
+            if (objectListing.isTruncated())
+                objectListing = s3Client.listNextBatchOfObjects(objectListing);
+            else return;
         }
     }
 }
