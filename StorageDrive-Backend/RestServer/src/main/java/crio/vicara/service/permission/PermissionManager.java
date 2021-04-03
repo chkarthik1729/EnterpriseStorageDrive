@@ -68,6 +68,17 @@ public class PermissionManager {
     }
 
     /**
+     * Tells whether userEmail is owner of fileId or not
+     * @param fileId
+     * @param userEmail
+     * @return
+     */
+    public boolean isOwner(String fileId, String userEmail) {
+        var permissions = permissionsDao.getPermissions(fileId);
+        return permissions.ownerEmail.equals(userEmail);
+    }
+
+    /**
      * Gives read access to userEmail on fileId and its descendants
      * @param fileId
      * @param userEmail

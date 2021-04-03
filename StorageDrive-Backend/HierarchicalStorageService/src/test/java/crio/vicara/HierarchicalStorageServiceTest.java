@@ -3,6 +3,7 @@ package crio.vicara;
 import crio.vicara.service.AmazonSimpleStorageService;
 import crio.vicara.service.HierarchicalStorageService;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ public class HierarchicalStorageServiceTest {
             HierarchicalStorageService.with(AmazonSimpleStorageService.getInstance());
 
     @BeforeEach
-    public void clearStorageService() {
+    public void clearStorageServiceBeforeEachTest() {
         storageService.clearAll();
     }
 
@@ -214,5 +215,10 @@ public class HierarchicalStorageServiceTest {
         assertEquals(test1Id, storageService.getFileIdByName(null, "Test1"));
         String test2Id = storageService.createDirectory(test1Id, "Test2");
         assertEquals(test2Id, storageService.getFileIdByName(test1Id, "Test2"));
+    }
+
+    @AfterEach
+    public void clearStorageServiceAfterEachTest() {
+        storageService.clearAll();
     }
 }

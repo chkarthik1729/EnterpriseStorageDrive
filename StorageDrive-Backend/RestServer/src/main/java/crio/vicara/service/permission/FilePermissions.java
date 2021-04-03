@@ -15,6 +15,9 @@ public class FilePermissions {
 
     List<Access> accessList;
 
+    public FilePermissions(){
+    }
+
     public FilePermissions(String parentId, String fileId, String ownerEmail) {
         this.parentId = parentId;
         this.fileId = fileId;
