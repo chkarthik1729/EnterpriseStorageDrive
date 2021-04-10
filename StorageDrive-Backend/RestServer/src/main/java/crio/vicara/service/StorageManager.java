@@ -4,17 +4,16 @@ import crio.vicara.File;
 import crio.vicara.HierarchicalStorageSystem;
 import crio.vicara.StorageServiceDetails;
 import crio.vicara.exception.UnauthorizedException;
-import crio.vicara.service.permission.PermissionManager;
+import crio.vicara.service.favourites.Favourites;
+import crio.vicara.service.permissions.PermissionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.nio.file.NotDirectoryException;
+import java.util.*;
 
 @Component
 public class StorageManager {
@@ -23,7 +22,10 @@ public class StorageManager {
     private HierarchicalStorageSystem defaultStorageSystem;
 
     @Autowired
-    PermissionManager permissionManager;
+    private PermissionManager permissionManager;
+
+    @Autowired
+    private Favourites favourites;
 
     public StorageManager() {
         storageSystems.add(
@@ -111,7 +113,7 @@ public class StorageManager {
         var storageProviderName =  decodeStorageProviderName(parentId);
         var storageSystem = findByName(storageProviderName);
         var originalParentId = decodeOriginalFileIdInsideStorageProvider(parentId);
-        var originalFileId = storageSystem.uploadFile(parentId, fileName, stream, length);
+        var originalFileId = storageSystem.uploadFile(originalParentId, fileName, stream, length);
         return encodeFileWithStorageProvider(originalFileId, storageProviderName);
     }
 
@@ -168,6 +170,70 @@ public class StorageManager {
             return storageSystem.downloadableFileURL(originalFileId, 3600);
 
         else return storageSystem.downloadFile(originalFileId);
+    }
+
+    public void move(String fromId, String toId, boolean forced, String userEmail) throws FileAlreadyExistsException, NotDirectoryException {
+        if (!decodeStorageProviderName(fromId).equals(decodeStorageProviderName(toId)))
+            throw new UnauthorizedException();
+        if (!permissionManager.hasWriteAccess(fromId, userEmail)
+                || !permissionManager.hasWriteAccess(toId, userEmail))
+            throw new UnauthorizedException();
+
+        var storageProviderName = decodeStorageProviderName(fromId);
+        var storageSystem = findByName(storageProviderName);
+
+        storageSystem.move(
+                decodeOriginalFileIdInsideStorageProvider(fromId),
+                decodeStorageProviderName(toId),
+                forced
+        );
+    }
+
+    public FileDetails getFileDetails(String fileId, String userEmail) {
+        if (!permissionManager.hasReadAccess(fileId, userEmail))
+            throw new UnauthorizedException();
+
+        FileDetails fileDetails = new FileDetails();
+        var storageProviderName = decodeStorageProviderName(fileId);
+        var storageSystem = findByName(storageProviderName);
+        var originalFileId = decodeOriginalFileIdInsideStorageProvider(fileId);
+        File file = storageSystem.getFile(originalFileId);
+
+        fileDetails.setFileName(file.getFileName());
+        fileDetails.setFilePath(storageSystem.getFilePath(originalFileId));
+        fileDetails.setFileId(fileId);
+        fileDetails.setDirectory(file.isDirectory());
+        fileDetails.setFavourite(favourites.isFavourite(fileId, userEmail));
+        fileDetails.setCreatedAt(file.getCreationTime());
+        fileDetails.setLength(storageSystem.getLength(originalFileId));
+        fileDetails.setLastModified(file.getLastModifiedTime());
+
+        return fileDetails;
+    }
+
+    public FileDetails patchFileDetails(String fileId, String userEmail, Map<String, String> changes) throws FileAlreadyExistsException {
+        if (!permissionManager.hasWriteAccess(fileId, userEmail)) throw new UnauthorizedException();
+
+        var storageSystem = findByName(decodeStorageProviderName(fileId));
+        var originalFileId = decodeOriginalFileIdInsideStorageProvider(fileId);
+
+        if (changes.containsKey("fileName")) {
+            storageSystem.rename(originalFileId, changes.get("fileName"));
+        }
+
+        if (changes.containsKey("favourite")) {
+            boolean fav = Boolean.parseBoolean(changes.get("favourite"));
+            if (fav) favourites.addFavourite(fileId, userEmail);
+            else favourites.removeFavourite(fileId, userEmail);
+        }
+
+        return getFileDetails(fileId, userEmail);
+    }
+
+    public List<FileDetails> getFavourites(String userEmail) {
+        List<FileDetails> favouriteFiles = new ArrayList<>();
+        favourites.getFavourites(userEmail).forEach(favFile -> favouriteFiles.add(getFileDetails(favFile, userEmail)));
+        return favouriteFiles;
     }
 
     public String getFileName(String fileId) {

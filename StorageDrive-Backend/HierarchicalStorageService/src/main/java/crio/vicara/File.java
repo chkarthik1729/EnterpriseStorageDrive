@@ -26,22 +26,12 @@ public class File {
 
     private String parentId;
 
-    private long length;
-
     public List<ChildFile> getChildren() {
         return children;
     }
 
     public void setChildren(List<ChildFile> children) {
         this.children = children;
-    }
-
-    public long getLength() {
-        return length;
-    }
-
-    public void setLength(long length) {
-        this.length = length;
     }
 
     public String getFileName() {

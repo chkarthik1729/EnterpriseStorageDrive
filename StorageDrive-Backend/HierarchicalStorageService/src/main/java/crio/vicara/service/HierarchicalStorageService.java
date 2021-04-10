@@ -35,7 +35,7 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
         var fileTreeCollection = mongoDatabase.getCollection("fileTree", File.class);
 
         mongoDao = new MongoDataAccessObject(fileTreeCollection);
-        rootId = mongoDao.addFile(createFile(null, "Root", true));
+        rootId = mongoDao.createRootFolderIfDoesNotExist();
     }
 
     private static MongoClient configureAndGetMongoClient() {
@@ -110,6 +110,8 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
         File destinationFile = mongoDao.findFile(destinationId);
         if (!destinationFile.isDirectory())
             throw new NotDirectoryException("Destination is not a directory");
+
+        //TODO: Moving a parent to its child should not work
 
         File sourceFile = mongoDao.findFile(sourceId);
 
@@ -190,6 +192,16 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
         mongoDao.clearAllDocuments();
         flatStorageSystem.clearAll();
         rootId = mongoDao.addFile(createFile(null, "Root", true));
+    }
+
+    @Override
+    public String getFilePath(String fileId) {
+        if (fileId.equals(rootId)) return "";
+
+        StringBuilder path = new StringBuilder();
+        File file = getFile(fileId);
+        path.append(getFilePath(file.getParentId())).append("/").append(file.getFileName());
+        return path.toString();
     }
 
     private void ensureSameFileNameDoesNotExist(String parentId, String fileName) throws FileAlreadyExistsException {

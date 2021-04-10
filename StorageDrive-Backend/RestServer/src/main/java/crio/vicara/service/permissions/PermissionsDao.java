@@ -1,4 +1,4 @@
-package crio.vicara.service.permission;
+package crio.vicara.service.permissions;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.ConnectionString;
@@ -6,6 +6,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.ReplaceOptions;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,11 @@ public class PermissionsDao {
     }
 
     public void savePermissions(FilePermissions permissions) {
-        mongoCollection.insertOne(permissions);
+        mongoCollection.replaceOne(
+                new BasicDBObject("_id", permissions.getFileId()),
+                permissions,
+                new ReplaceOptions().upsert(true)
+        );
     }
 
     public FilePermissions getPermissions(String fileId) {

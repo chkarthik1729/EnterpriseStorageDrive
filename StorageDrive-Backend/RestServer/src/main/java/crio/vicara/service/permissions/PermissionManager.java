@@ -1,7 +1,9 @@
-package crio.vicara.service.permission;
+package crio.vicara.service.permissions;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
 
 @Component
 public class PermissionManager {
@@ -30,9 +32,9 @@ public class PermissionManager {
         if (fileId == null) return false;
         var permissions = getPermissions(fileId);
         if (permissions.ownerEmail.equals(userEmail)) return true;
-        for (var acl : permissions.accessList) {
-            if (acl.userEmail.equals(userEmail) &&
-                    (acl.access == AccessLevel.Read || acl.access == AccessLevel.Write))
+        for (var access : permissions.accessList) {
+            if (access.getUserEmail().equals(userEmail) &&
+                    (access.getLevel().equals("Read") || access.getLevel().equals("Write")))
                 return true;
         }
         return hasReadAccessRecurse(permissions.parentId, userEmail);
@@ -60,8 +62,8 @@ public class PermissionManager {
         if (fileId == null) return false;
         var permissions = getPermissions(fileId);
         if (permissions.ownerEmail.equals(userEmail)) return true;
-        for (var acl : permissions.accessList) {
-            if (acl.userEmail.equals(userEmail) && acl.access == AccessLevel.Write)
+        for (var access : permissions.accessList) {
+            if (access.getUserEmail().equals(userEmail) && access.getLevel().equals("Write"))
                 return true;
         }
         return hasWriteAccessRecurse(permissions.parentId, userEmail);
@@ -85,7 +87,8 @@ public class PermissionManager {
      */
     public void giveReadAccess(String fileId, String userEmail) {
         var permissions = getPermissions(fileId);
-        permissions.accessList.add(new Access(userEmail, AccessLevel.Read));
+        if (permissions.getAccessList() == null) permissions.setAccessList(new ArrayList<>());
+        permissions.getAccessList().add(new Access(userEmail, AccessLevel.Read));
         permissionsDao.savePermissions(permissions);
     }
 
@@ -96,7 +99,8 @@ public class PermissionManager {
      */
     public void giveWriteAccess(String fileId, String userEmail) {
         var permissions = getPermissions(fileId);
-        permissions.accessList.add(new Access(userEmail, AccessLevel.Write));
+        if (permissions.getAccessList() == null) permissions.setAccessList(new ArrayList<>());
+        permissions.getAccessList().add(new Access(userEmail, AccessLevel.Write));
         permissionsDao.savePermissions(permissions);
     }
 
@@ -108,7 +112,8 @@ public class PermissionManager {
      */
     public void revokeAccess(String fileId, String userEmail) {
         var permissions = getPermissions(fileId);
-        permissions.accessList.removeIf(acl -> acl.userEmail.equals(userEmail));
+        if (permissions.accessList == null) return;
+        permissions.accessList.removeIf(acl -> acl.getUserEmail().equals(userEmail));
         permissionsDao.savePermissions(permissions);
     }
 

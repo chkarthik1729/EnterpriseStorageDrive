@@ -1,6 +1,7 @@
 package crio.vicara.controller;
 
 import crio.vicara.File;
+import crio.vicara.service.FileDetails;
 import crio.vicara.service.StorageManager;
 import crio.vicara.user.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NotDirectoryException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -107,5 +110,33 @@ public class FileController {
     public void deleteFile(Authentication authentication,
                            @PathVariable String fileId) {
         storageManager.deleteFile(fileId, authentication.getName());
+    }
+
+    @PutMapping(value = "/files/move")
+    public void moveFileOrFolder(Authentication authentication,
+                                 @RequestBody Map<String, String> payload) throws FileAlreadyExistsException, NotDirectoryException {
+        storageManager.move(
+                payload.get("fromId"),
+                payload.get("toId"),
+                Boolean.parseBoolean(payload.get("forced")),
+                authentication.getName()
+        );
+    }
+
+    @GetMapping(value = "/files/{fileId}/details")
+    public FileDetails getFileDetails(Authentication authentication, @PathVariable String fileId) {
+        return storageManager.getFileDetails(fileId, authentication.getName());
+    }
+
+    @PatchMapping(value = "/files/{fileId}/details")
+    public FileDetails patchFileDetails(Authentication authentication,
+                                        @PathVariable String fileId,
+                                        @RequestBody Map<String, String> payload) throws FileAlreadyExistsException {
+        return storageManager.patchFileDetails(fileId, authentication.getName(), payload);
+    }
+
+    @GetMapping(value = "/files/favourites")
+    public List<FileDetails> getFavourites(Authentication authentication) {
+        return storageManager.getFavourites(authentication.getName());
     }
 }

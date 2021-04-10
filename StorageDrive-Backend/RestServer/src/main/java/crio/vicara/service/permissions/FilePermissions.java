@@ -1,8 +1,7 @@
-package crio.vicara.service.permission;
+package crio.vicara.service.permissions;
 
 import org.bson.codecs.pojo.annotations.BsonId;
 
-import java.io.File;
 import java.util.List;
 
 public class FilePermissions {
@@ -16,7 +15,7 @@ public class FilePermissions {
 
     List<Access> accessList;
 
-    public FilePermissions(){
+    public FilePermissions() {
     }
 
     public FilePermissions(String parentId, String fileId, String ownerEmail) {
@@ -58,16 +57,3 @@ public class FilePermissions {
     }
 }
 
-enum AccessLevel {
-    Read, Write
-}
-
-class Access {
-    String userEmail;
-    AccessLevel access;
-
-    public Access(String userEmail, AccessLevel access) {
-        this.userEmail = userEmail;
-        this.access = access;
-    }
-}

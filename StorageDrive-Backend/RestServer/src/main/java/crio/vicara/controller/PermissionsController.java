@@ -1,9 +1,10 @@
 package crio.vicara.controller;
 
 import crio.vicara.exception.UnauthorizedException;
-import crio.vicara.service.permission.FilePermissions;
-import crio.vicara.service.permission.PermissionManager;
+import crio.vicara.service.permissions.FilePermissions;
+import crio.vicara.service.permissions.PermissionManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class PermissionsController {
         } else throw new UnauthorizedException();
     }
 
-    @PatchMapping("/files/{fileId}/permissions")
+    @PatchMapping(value = "/files/{fileId}/permissions", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public void patchPermissions(@PathVariable String fileId,
                                  Authentication authentication,
                                  @RequestBody Map<String, String> payload) {
@@ -37,7 +38,7 @@ public class PermissionsController {
                 if (entry.getValue().equals("Read"))
                     permissionManager.giveReadAccess(fileId, entry.getKey());
                 if (entry.getValue().equals("Write"))
-                    permissionManager.giveWriteAccess(fileId, entry.getValue());
+                    permissionManager.giveWriteAccess(fileId, entry.getKey());
             }
         } else throw new UnauthorizedException();
     }

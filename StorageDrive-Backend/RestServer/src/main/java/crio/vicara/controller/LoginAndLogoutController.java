@@ -5,6 +5,8 @@ import crio.vicara.service.StorageManager;
 import crio.vicara.user.User;
 import crio.vicara.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,13 +23,14 @@ public class LoginAndLogoutController {
     @Autowired UserService userService;
     @Autowired StorageManager storageManager;
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public void registerUser(@RequestBody @Valid User user) throws FileAlreadyExistsException {
         userService.registerUser(user);
     }
 
-    @GetMapping("/sign-in")
-    public void signIn() {
+    @PostMapping("/sign-in")
+    public String signIn(Authentication authentication) {
+        return authentication.getName();
     }
 
     @GetMapping("/logout")

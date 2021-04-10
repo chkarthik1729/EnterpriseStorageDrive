@@ -39,5 +39,7 @@ public interface HierarchicalStorageSystem {
 
     boolean exists(String fileId);
 
+    String getFilePath(String fileId);
+
     void clearAll();
 }
