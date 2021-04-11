@@ -34,10 +34,13 @@ public class MongoDataAccessObject {
                 .append("parentId", null);
 
         File previous = fileCollection.find(filter).first();
-        if (previous != null) return previous.getFileName();
+        if (previous != null) return previous.getFileId();
 
         File file = new File();
         file.setFileId(new ObjectId().toHexString());
+        file.setDirectory(true);
+        file.setCreationTime(System.currentTimeMillis());
+        file.setLastModifiedTime(System.currentTimeMillis());
         file.setFileName("Root");
         return addFile(file);
     }
