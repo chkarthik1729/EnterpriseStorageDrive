@@ -114,7 +114,9 @@ public class StorageManager {
         var storageSystem = findByName(storageProviderName);
         var originalParentId = decodeOriginalFileIdInsideStorageProvider(parentId);
         var originalFileId = storageSystem.uploadFile(originalParentId, fileName, stream, length);
-        return encodeFileWithStorageProvider(originalFileId, storageProviderName);
+        var finalFileId = encodeFileWithStorageProvider(originalFileId, storageProviderName);
+        permissionManager.addNewFile(parentId, finalFileId, permissionManager.getPermissions(parentId).getOwnerEmail());
+        return finalFileId;
     }
 
     /**
@@ -141,7 +143,7 @@ public class StorageManager {
                                 storageProviderName)
                 ));
         file.setFileId(encodeFileWithStorageProvider(file.getFileId(), storageProviderName));
-        file.setParentId(encodeFileWithStorageProvider(file.getParentId(), storageProviderName));
+        file.setParentId(null);
         return file;
     }
 

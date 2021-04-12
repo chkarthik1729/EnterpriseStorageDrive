@@ -19,7 +19,7 @@ public class PermissionManager {
     public boolean hasReadAccess(String fileId, String userEmail) {
         var permissions = getPermissions(fileId);
         if (permissions.ownerEmail.equals(userEmail)) return true;
-        return hasWriteAccessRecurse(fileId, userEmail);
+        return hasReadAccessRecurse(fileId, userEmail);
     }
 
     /**
@@ -32,9 +32,13 @@ public class PermissionManager {
         if (fileId == null) return false;
         var permissions = getPermissions(fileId);
         if (permissions.ownerEmail.equals(userEmail)) return true;
+
+        if (permissions.accessList == null)
+            return hasReadAccessRecurse(permissions.parentId, userEmail);
+
         for (var access : permissions.accessList) {
             if (access.getUserEmail().equals(userEmail) &&
-                    (access.getLevel().equals("Read") || access.getLevel().equals("Write")))
+                    (access.getLevel() == AccessLevel.Read || access.getLevel() == AccessLevel.Write))
                 return true;
         }
         return hasReadAccessRecurse(permissions.parentId, userEmail);
@@ -62,8 +66,12 @@ public class PermissionManager {
         if (fileId == null) return false;
         var permissions = getPermissions(fileId);
         if (permissions.ownerEmail.equals(userEmail)) return true;
+
+        if (permissions.accessList == null)
+            return hasWriteAccessRecurse(permissions.parentId, userEmail);
+
         for (var access : permissions.accessList) {
-            if (access.getUserEmail().equals(userEmail) && access.getLevel().equals("Write"))
+            if (access.getUserEmail().equals(userEmail) && access.getLevel() == AccessLevel.Write)
                 return true;
         }
         return hasWriteAccessRecurse(permissions.parentId, userEmail);
