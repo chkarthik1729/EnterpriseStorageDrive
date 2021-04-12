@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class PermissionManager {
@@ -97,6 +98,7 @@ public class PermissionManager {
         var permissions = getPermissions(fileId);
         if (permissions.getAccessList() == null) permissions.setAccessList(new ArrayList<>());
         permissions.getAccessList().add(new Access(userEmail, AccessLevel.Read));
+        permissionsDao.shareFileWith(fileId, userEmail);
         permissionsDao.savePermissions(permissions);
     }
 
@@ -109,6 +111,7 @@ public class PermissionManager {
         var permissions = getPermissions(fileId);
         if (permissions.getAccessList() == null) permissions.setAccessList(new ArrayList<>());
         permissions.getAccessList().add(new Access(userEmail, AccessLevel.Write));
+        permissionsDao.shareFileWith(fileId, userEmail);
         permissionsDao.savePermissions(permissions);
     }
 
@@ -122,6 +125,7 @@ public class PermissionManager {
         var permissions = getPermissions(fileId);
         if (permissions.accessList == null) return;
         permissions.accessList.removeIf(acl -> acl.getUserEmail().equals(userEmail));
+        permissionsDao.removeFileSharedWithMe(fileId, userEmail);
         permissionsDao.savePermissions(permissions);
     }
 
@@ -144,5 +148,11 @@ public class PermissionManager {
     public void addNewFile(String parentId, String fileId, String ownerEmail) {
         FilePermissions permissions = new FilePermissions(parentId, fileId, ownerEmail);
         permissionsDao.savePermissions(permissions);
+    }
+
+    public List<String> filesSharedWithMe(String userEmail) {
+        SharedFiles sharedFiles = permissionsDao.getFilesSharedWith(userEmail);
+        if (sharedFiles == null || sharedFiles.filesSharedWithMe == null) return List.of();
+        return sharedFiles.filesSharedWithMe;
     }
 }

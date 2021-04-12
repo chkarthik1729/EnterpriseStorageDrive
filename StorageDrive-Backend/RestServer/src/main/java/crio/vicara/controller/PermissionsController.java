@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -41,5 +42,10 @@ public class PermissionsController {
                     permissionManager.giveWriteAccess(fileId, entry.getKey());
             }
         } else throw new UnauthorizedException();
+    }
+
+    @GetMapping("/files/shared-with-me")
+    public List<String> getFilesSharedWithMe(Authentication authentication) {
+        return permissionManager.filesSharedWithMe(authentication.getName());
     }
 }
