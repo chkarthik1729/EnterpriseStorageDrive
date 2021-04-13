@@ -6,6 +6,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.ReplaceOptions;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +37,11 @@ public class Favourites {
             userFavourites.setFileIds(favouriteFiles);
         }
 
-        mongoCollection.insertOne(userFavourites);
+        mongoCollection.replaceOne(
+                new BasicDBObject("_id", userEmail),
+                userFavourites,
+                new ReplaceOptions().upsert(true)
+        );
     }
 
     public List<String> getFavourites(String userEmail) {
@@ -57,7 +62,12 @@ public class Favourites {
         if (userFavourites == null) return;
         if (userFavourites.getFileIds() == null) return;
         userFavourites.getFileIds().remove(fileId);
-        mongoCollection.insertOne(userFavourites);
+
+        mongoCollection.replaceOne(
+                new BasicDBObject("_id", userEmail),
+                userFavourites,
+                new ReplaceOptions().upsert(true)
+        );
     }
 
     private static MongoClient configureAndGetMongoClient() {
