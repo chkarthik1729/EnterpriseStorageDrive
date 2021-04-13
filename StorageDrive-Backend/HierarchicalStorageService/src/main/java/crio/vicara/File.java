@@ -16,8 +16,6 @@ public class File {
 
     private List<ChildFile> children;
 
-    private String path;
-
     private boolean isDirectory;
 
     private long lastModifiedTime;
