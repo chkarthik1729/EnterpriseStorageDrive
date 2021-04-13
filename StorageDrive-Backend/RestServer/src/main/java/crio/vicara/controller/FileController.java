@@ -42,7 +42,7 @@ public class FileController {
 
     @PostMapping(value = "/files", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public String createDirectoryInsideUserRootFolder(@RequestBody Map<String, Object> payload,
-                                                      Authentication authentication) throws FileAlreadyExistsException {
+                                                      Authentication authentication) throws FileAlreadyExistsException, FileNotFoundException {
         String folderName = (String) payload.get("folderName");
         String currUserEmail = authentication.getName();
         return storageManager
@@ -101,7 +101,7 @@ public class FileController {
     }
 
     @GetMapping(value = "/files")
-    public File getUserHomeFolder(Authentication authentication) {
+    public File getUserHomeFolder(Authentication authentication) throws FileNotFoundException {
         String currUserEmail = authentication.getName();
         return storageManager.getUserRootFolder(currUserEmail,
                 userDao.findByEmail(currUserEmail).getStorageProvider());

@@ -72,7 +72,7 @@ public class StorageManager {
 
     public String createFolderInsideUserRootFolder(String folderName,
                                                    String storageProviderName,
-                                                   String userEmail) throws FileAlreadyExistsException {
+                                                   String userEmail) throws FileAlreadyExistsException, FileNotFoundException {
         var storageSystem = findByName(storageProviderName);
         var userRootFolderId = storageSystem.getFileIdByName(null, userEmail);
         var originalFileId = storageSystem.createDirectory(userRootFolderId, folderName);
@@ -97,7 +97,7 @@ public class StorageManager {
                                                  InputStream stream,
                                                  long length,
                                                  String storageProviderName,
-                                                 String userEmail) throws FileAlreadyExistsException {
+                                                 String userEmail) throws FileAlreadyExistsException, FileNotFoundException {
 
         var storageSystem = findByName(storageProviderName);
         var userRootFolderId = storageSystem.getFileIdByName(null, userEmail);
@@ -131,7 +131,7 @@ public class StorageManager {
         storageSystem.delete(originalFileId);
     }
 
-    public File getUserRootFolder(String userEmail, String storageProviderName) {
+    public File getUserRootFolder(String userEmail, String storageProviderName) throws FileNotFoundException {
         var storageSystem = findByName(storageProviderName);
 
         File file = storageSystem.getFile(storageSystem.getFileIdByName(null, userEmail));
