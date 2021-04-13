@@ -1,6 +1,8 @@
 package crio.vicara.controller;
 
 import crio.vicara.exception.UnauthorizedException;
+import crio.vicara.service.FileDetails;
+import crio.vicara.service.StorageManager;
 import crio.vicara.service.permissions.FilePermissions;
 import crio.vicara.service.permissions.PermissionManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
 
@@ -19,9 +22,12 @@ public class PermissionsController {
     @Autowired
     PermissionManager permissionManager;
 
+    @Autowired
+    StorageManager storageManager;
+
     @GetMapping("/files/{fileId}/permissions")
     public FilePermissions getPermissions(@PathVariable String fileId,
-                                          Authentication authentication) {
+                                          Authentication authentication) throws FileNotFoundException {
         if (permissionManager.hasReadAccess(fileId, authentication.getName())) {
             return permissionManager.getPermissions(fileId);
         } else throw new UnauthorizedException();
@@ -30,7 +36,7 @@ public class PermissionsController {
     @PatchMapping(value = "/files/{fileId}/permissions", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public void patchPermissions(@PathVariable String fileId,
                                  Authentication authentication,
-                                 @RequestBody Map<String, String> payload) {
+                                 @RequestBody Map<String, String> payload) throws FileNotFoundException {
 
         if (permissionManager.hasWriteAccess(fileId, authentication.getName())) {
             for (Map.Entry<String, String> entry : payload.entrySet()) {
@@ -45,7 +51,7 @@ public class PermissionsController {
     }
 
     @GetMapping("/files/shared-with-me")
-    public List<String> getFilesSharedWithMe(Authentication authentication) {
-        return permissionManager.filesSharedWithMe(authentication.getName());
+    public List<FileDetails> getFilesSharedWithMe(Authentication authentication) throws FileNotFoundException {
+        return storageManager.getFilesSharedWithMe(authentication.getName());
     }
 }

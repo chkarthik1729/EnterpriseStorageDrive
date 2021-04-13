@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -32,7 +33,7 @@ public class FileController {
     @PostMapping(value = "/files/{parentId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public String createDirectory(@PathVariable String parentId,
                                   @RequestBody Map<String, Object> payload,
-                                  Authentication authentication) throws FileAlreadyExistsException {
+                                  Authentication authentication) throws FileAlreadyExistsException, FileNotFoundException {
         String folderName = (String) payload.get("folderName");
         String currUserEmail = authentication.getName();
 
@@ -78,7 +79,7 @@ public class FileController {
     @GetMapping(value = "/files/{fileId}")
     public Object getFileOrFolder(Authentication authentication,
                                   @PathVariable String fileId,
-                                  HttpServletResponse servletResponse) {
+                                  HttpServletResponse servletResponse) throws FileNotFoundException {
         String currUserEmail = authentication.getName();
         Object res = storageManager.getFileOrFolder(fileId, currUserEmail);
         if (res instanceof URL) {
@@ -108,13 +109,13 @@ public class FileController {
 
     @DeleteMapping(value = "/files/{fileId}")
     public void deleteFile(Authentication authentication,
-                           @PathVariable String fileId) {
+                           @PathVariable String fileId) throws FileNotFoundException {
         storageManager.deleteFile(fileId, authentication.getName());
     }
 
     @PutMapping(value = "/files/move")
     public void moveFileOrFolder(Authentication authentication,
-                                 @RequestBody Map<String, String> payload) throws FileAlreadyExistsException, NotDirectoryException {
+                                 @RequestBody Map<String, String> payload) throws FileAlreadyExistsException, NotDirectoryException, FileNotFoundException {
         storageManager.move(
                 payload.get("fromId"),
                 payload.get("toId"),
@@ -124,14 +125,14 @@ public class FileController {
     }
 
     @GetMapping(value = "/files/{fileId}/details")
-    public FileDetails getFileDetails(Authentication authentication, @PathVariable String fileId) {
+    public FileDetails getFileDetails(Authentication authentication, @PathVariable String fileId) throws FileNotFoundException {
         return storageManager.getFileDetails(fileId, authentication.getName());
     }
 
     @PatchMapping(value = "/files/{fileId}/details")
     public FileDetails patchFileDetails(Authentication authentication,
                                         @PathVariable String fileId,
-                                        @RequestBody Map<String, String> payload) throws FileAlreadyExistsException {
+                                        @RequestBody Map<String, String> payload) throws FileAlreadyExistsException, FileNotFoundException {
         return storageManager.patchFileDetails(fileId, authentication.getName(), payload);
     }
 

@@ -8,6 +8,7 @@ import crio.vicara.*;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.types.ObjectId;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
@@ -162,18 +163,21 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
     }
 
     @Override
-    public URL downloadableFileURL(String fileId, long urlExpirySeconds) {
+    public URL downloadableFileURL(String fileId, long urlExpirySeconds) throws FileNotFoundException {
+        if (!flatStorageSystem.exists(fileId)) throw new FileNotFoundException();
         return flatStorageSystem.getObjectURL(fileId, urlExpirySeconds);
     }
 
     @Override
-    public InputStream downloadFile(String fileId) {
+    public InputStream downloadFile(String fileId) throws FileNotFoundException {
+        if (!flatStorageSystem.exists(fileId)) throw new FileNotFoundException();
         return flatStorageSystem.getObject(fileId);
     }
 
     @Override
-    public long getLength(String fileId) {
+    public long getLength(String fileId) throws FileNotFoundException {
         File file = mongoDao.findFile(fileId);
+        if (file == null) throw new FileNotFoundException();
 
         if (file.isDirectory()) {
             long totalLength = 0;

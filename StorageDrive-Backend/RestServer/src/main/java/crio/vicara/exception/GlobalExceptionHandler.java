@@ -12,7 +12,7 @@ import java.nio.file.FileAlreadyExistsException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     public void handleUnauthorizedAccessException() {
     }
 

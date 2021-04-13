@@ -3,6 +3,7 @@ package crio.vicara.service.permissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,21 +14,16 @@ public class PermissionManager {
 
     /**
      * Checks if the userEmail has read access to the file/folder
-     * @param fileId
-     * @param userEmail
-     * @return
      */
-    public boolean hasReadAccess(String fileId, String userEmail) {
+    public boolean hasReadAccess(String fileId, String userEmail) throws FileNotFoundException {
         var permissions = getPermissions(fileId);
+        if (permissions == null) throw new FileNotFoundException();
         if (permissions.ownerEmail.equals(userEmail)) return true;
         return hasReadAccessRecurse(fileId, userEmail);
     }
 
     /**
      * Recursively checks if the user has read access on the file/folder or any of its ancestors
-     * @param fileId
-     * @param userEmail
-     * @return
      */
     private boolean hasReadAccessRecurse(String fileId, String userEmail) {
         if (fileId == null) return false;
@@ -47,21 +43,16 @@ public class PermissionManager {
 
     /**
      * Checks if the userEmail has write access to the file/folder
-     * @param fileId
-     * @param userEmail
-     * @return
      */
-    public boolean hasWriteAccess(String fileId, String userEmail) {
+    public boolean hasWriteAccess(String fileId, String userEmail) throws FileNotFoundException {
         var permissions = getPermissions(fileId);
+        if (permissions == null) throw new FileNotFoundException();
         if (permissions.ownerEmail.equals(userEmail)) return true;
         return hasWriteAccessRecurse(fileId, userEmail);
     }
 
     /**
      * Recursively checks if the user has write access on the file/folder or any of its ancestors
-     * @param fileId
-     * @param userEmail
-     * @return
      */
     private boolean hasWriteAccessRecurse(String fileId, String userEmail) {
         if (fileId == null) return false;
@@ -80,9 +71,6 @@ public class PermissionManager {
 
     /**
      * Tells whether userEmail is owner of fileId or not
-     * @param fileId
-     * @param userEmail
-     * @return
      */
     public boolean isOwner(String fileId, String userEmail) {
         var permissions = permissionsDao.getPermissions(fileId);
@@ -91,8 +79,6 @@ public class PermissionManager {
 
     /**
      * Gives read access to userEmail on fileId and its descendants
-     * @param fileId
-     * @param userEmail
      */
     public void giveReadAccess(String fileId, String userEmail) {
         var permissions = getPermissions(fileId);
@@ -104,8 +90,6 @@ public class PermissionManager {
 
     /**
      * Gives write access to userEmail on fileId and its descendants
-     * @param fileId
-     * @param userEmail
      */
     public void giveWriteAccess(String fileId, String userEmail) {
         var permissions = getPermissions(fileId);
@@ -117,9 +101,6 @@ public class PermissionManager {
 
     /**
      * Revokes access to userEmail on fileId.
-     * Note that this does not revoke access on any of the descendants of fileId if given explicitly
-     * @param fileId
-     * @param userEmail
      */
     public void revokeAccess(String fileId, String userEmail) {
         var permissions = getPermissions(fileId);
@@ -132,8 +113,6 @@ public class PermissionManager {
     /**
      * Gets FilePermissions for fileId.
      * Note that this only gives permission information given explicitly to this fileId
-     * @param fileId
-     * @return
      */
     public FilePermissions getPermissions(String fileId) {
         return permissionsDao.getPermissions(fileId);
@@ -141,9 +120,6 @@ public class PermissionManager {
 
     /**
      * Adds a new file and creates appropriate access control list
-     * @param parentId
-     * @param fileId
-     * @param ownerEmail
      */
     public void addNewFile(String parentId, String fileId, String ownerEmail) {
         FilePermissions permissions = new FilePermissions(parentId, fileId, ownerEmail);
