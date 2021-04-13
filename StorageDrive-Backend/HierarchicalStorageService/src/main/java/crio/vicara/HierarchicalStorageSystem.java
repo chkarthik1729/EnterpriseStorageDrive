@@ -16,11 +16,11 @@ public interface HierarchicalStorageSystem {
 
     String createDirectory(String parentId, String directoryName) throws FileAlreadyExistsException;
 
-    File getFile(String fileId);
+    File getFile(String fileId) throws FileNotFoundException;
 
     void delete(String fileId);
 
-    String getFileIdByName(String parentId, String fileName);
+    String getFileIdByName(String parentId, String fileName) throws FileNotFoundException;
 
     List<ChildFile> listChildren(String fileId);
 
@@ -40,7 +40,7 @@ public interface HierarchicalStorageSystem {
 
     boolean exists(String fileId);
 
-    String getFilePath(String fileId);
+    String getFilePath(String fileId) throws FileNotFoundException;
 
     void clearAll();
 }

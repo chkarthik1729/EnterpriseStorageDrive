@@ -31,7 +31,7 @@ public class HierarchicalStorageServiceTest {
     }
 
     @Test
-    public void testCreateFolder() throws FileAlreadyExistsException {
+    public void testCreateFolder() throws FileAlreadyExistsException, FileNotFoundException {
         String rootId = storageService.createDirectory(null, "Test");
         assertThrows(FileAlreadyExistsException.class,
                 () -> storageService.createDirectory(null, "Test")
@@ -210,7 +210,7 @@ public class HierarchicalStorageServiceTest {
     }
 
     @Test
-    public void testGetFileIdByName() throws FileAlreadyExistsException {
+    public void testGetFileIdByName() throws FileAlreadyExistsException, FileNotFoundException {
         String test1Id = storageService.createDirectory(null, "Test1");
         assertEquals(test1Id, storageService.getFileIdByName(null, "Test1"));
         String test2Id = storageService.createDirectory(test1Id, "Test2");
