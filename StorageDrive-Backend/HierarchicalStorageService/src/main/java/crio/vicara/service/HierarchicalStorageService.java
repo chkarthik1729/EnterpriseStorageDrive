@@ -66,18 +66,22 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
     }
 
     @Override
-    public File getFile(String fileId) {
+    public File getFile(String fileId) throws FileNotFoundException {
         File file = mongoDao.findFile(fileId);
-        if (file.getParentId().equals(rootId))
+        if (file == null) throw new FileNotFoundException();
+
+        if (rootId.equals(file.getParentId()))
             file.setParentId(null);
         return file;
     }
 
     @Override
-    public String getFileIdByName(String parentId, String fileName) {
+    public String getFileIdByName(String parentId, String fileName) throws FileNotFoundException {
         if (parentId == null)
             parentId = rootId;
-        return mongoDao.findChildInParent(parentId, fileName).getFileId();
+        ChildFile childFile = mongoDao.findChildInParent(parentId, fileName);
+        if (childFile == null) throw new FileNotFoundException();
+        return childFile.getFileId();
     }
 
     @Override
@@ -202,7 +206,7 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
     }
 
     @Override
-    public String getFilePath(String fileId) {
+    public String getFilePath(String fileId) throws FileNotFoundException {
         if (fileId == null || fileId.equals(rootId)) return "";
 
         StringBuilder path = new StringBuilder();
