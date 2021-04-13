@@ -204,6 +204,7 @@ public class StorageManager {
         fileDetails.setFileName(file.getFileName());
         fileDetails.setFilePath(storageSystem.getFilePath(originalFileId));
         fileDetails.setFileId(fileId);
+        fileDetails.setParentId(encodeFileWithStorageProvider(file.getParentId(), storageProviderName));
         fileDetails.setDirectory(file.isDirectory());
         fileDetails.setFavourite(favourites.isFavourite(fileId, userEmail));
         fileDetails.setCreatedAt(file.getCreationTime());

@@ -2,6 +2,7 @@ package crio.vicara.service;
 
 public class FileDetails {
     private String fileId;
+    private String parentId;
     private boolean isDirectory;
     private String filePath;
     private String fileName;
@@ -9,7 +10,6 @@ public class FileDetails {
     private long createdAt;
     private boolean isFavourite;
     private long length;
-
     public boolean isDirectory() {
         return isDirectory;
     }
@@ -40,6 +40,14 @@ public class FileDetails {
 
     public void setFileId(String fileId) {
         this.fileId = fileId;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
 
     public String getFilePath() {
