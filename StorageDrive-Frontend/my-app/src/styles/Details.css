@@ -1,0 +1,101 @@
+html {
+  font-size: 62.5%;
+}
+
+body {
+  --light: hsl(0, 0%, 100%);
+  --background: linear-gradient(to right bottom, white, white);
+
+
+  justify-content: center;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Open Sans', sans-serif;
+
+  min-height: 100vh;
+}
+
+.link-1 {
+  text-decoration: none;
+}
+
+.modal p {
+	color: black;
+	font-style:inherit;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+	font-size: large;
+  width: auto;
+  padding-left: 30px;
+}
+
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+
+  display: none;
+  justify-content: center;
+  align-items: center;
+  text-align: justify;
+
+  width: 100%;
+  height: 100%;
+
+  background: hsla(0, 0%, 40%, .6);
+}
+
+/* using :target */
+:target {
+  display: flex;
+}
+
+.modal {
+  width: 30rem;
+  padding: 4rem 2rem ;
+  border-radius: 8px;
+  color: var(--light);
+  background: var(--background);
+  box-shadow: .4rem .4rem 2.4rem .2rem hsla(240, 3%, 31%, 0.3);
+  position: relative;
+}
+
+
+/* closing button */
+
+.link-2 {
+  width: 4rem;
+  height: 4rem;
+  border: 1px solid hsla(0, 0%, 100%, .4);
+  border-radius: 100rem;
+
+  color: inherit;
+  font-size: 2.2rem;
+
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition: .2s;
+}
+
+.link-2::before {
+  content: '×';
+  border-color: rgba(12, 12, 12, 0.6);
+  color: black;
+  transform: translateY(-.1rem);
+}
+
+.link-2:hover,
+.link-2:focus {
+  border-color: rgba(12, 12, 12, 0.6);
+  transform: translateY(-.2rem);
+}
+
+a{
+  color:black; 
+  text-decoration: none;
+}  /* Selected link   */

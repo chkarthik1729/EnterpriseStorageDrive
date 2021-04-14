@@ -1,0 +1,78 @@
+.files-space {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 200px;
+    margin-left: 300px;
+    background-color: white;
+}
+
+.file-view {
+    margin: 25px;
+    padding-right: 25px;
+    width: 200px;
+    height: 160px;
+    text-align: center;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+    border-radius: 5px;
+    border-style: initial;
+}
+
+
+.icons-view {
+    display: flex;
+    margin: 15px;
+}
+
+.icons-view {
+    cursor: pointer;
+}
+
+.file-name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 18px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    width: 150px;
+    height: 20px;
+    margin-top: 0px;
+    margin-left: 20px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+.file-icon {
+    width: 80px;
+    height: 60px;
+    margin-top: 3px;
+    margin-left: 40px;
+    margin-right: 20px;
+}
+
+.fav-icon {
+    width: 20px;
+    height: 20px;
+    margin-top: 40px;
+}
+.fav-icon:hover {
+    cursor:pointer;
+}
+
+.file-view-menu {
+    display: flex;
+    text-align: center;
+    align-content: center;
+    flex-direction:row;
+    margin-top: 30px;
+}
+
+.file-view-menu img {
+    margin-top: 3px;
+    width: 5px;
+    height: 15px;
+}
+
+.menu-icon:hover {
+    cursor: pointer;
+}

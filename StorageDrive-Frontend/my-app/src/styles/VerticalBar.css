@@ -1,0 +1,48 @@
+* {
+    text-decoration: none;
+}
+.vertical-nav-bar h2 {
+    margin: 40px 20px 50px 20px;
+    padding: 10px;
+    color: rgba(100, 204, 205, 1)
+}
+.vertical-nav-bar {
+    position: fixed;
+    width: 250px;
+    height: 100%;
+    border-right: 1.5px solid;
+    border-right-color: rgba(143, 139, 139, 0.5);
+}
+.vertical-menu-list {
+    list-style: none;
+}
+.vertical-nav-bar ul li {
+    display: block;
+    height: 100%;
+    width: 100%;
+    line-height: 65px;
+    text-decoration: none;  
+    font-size: large;
+    padding-left: 40px;
+    box-sizing: border-box;
+    border-top: 1px solid rgba(143, 139, 139, 0.5);
+    border-bottom: 1px solid  rgba(143, 139, 139, 0.5);
+    transition: .4s;
+    color: black;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+ul li:hover {
+    padding-left: 50px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.file {
+    opacity: 0;
+    width: 200px;
+    height: 50px;
+    position: absolute;
+  }
+  .file:hover {
+      cursor: pointer;
+  }

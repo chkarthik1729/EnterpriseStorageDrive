@@ -1,0 +1,40 @@
+.menu-container {
+    padding: 0;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    width: 180px;
+    height: 260px;
+    text-align: center;
+    align-items: center;
+    display: block;
+    z-index: 2;
+    background: white ;
+    position: absolute;
+    margin-left: 190px;
+    margin-top: 10px;
+}
+.menu-container button {
+    width: 180px;
+    height: 40px;
+    padding: 2px;
+    
+}
+
+hr {
+    border-style: ridge;
+    border-color: rgb(90, 88, 88);
+}
+
+button {
+    margin: 2px;
+    border: none;
+    background: none;
+    font-size: 20px;
+    outline: none;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+button:hover {
+    border: none;
+    cursor: pointer;
+    background: rgba(31, 21, 21, 0.11);
+}
