@@ -22,9 +22,9 @@ public interface FlatStorageSystem {
 
     URL getObjectURL(String key, long urlExpirySeconds);
 
-    long getLength(String fileId);
+    long getLength(String key);
 
-    boolean exists(String fileId);
+    boolean exists(String key);
 
     void clearAll();
 }

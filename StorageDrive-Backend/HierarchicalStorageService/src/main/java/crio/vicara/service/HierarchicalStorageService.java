@@ -8,6 +8,7 @@ import crio.vicara.*;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.types.ObjectId;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
@@ -35,7 +36,7 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
         var fileTreeCollection = mongoDatabase.getCollection("fileTree", File.class);
 
         mongoDao = new MongoDataAccessObject(fileTreeCollection);
-        rootId = mongoDao.addFile(createFile(null, "Root", true));
+        rootId = mongoDao.createRootFolderIfDoesNotExist();
     }
 
     private static MongoClient configureAndGetMongoClient() {
@@ -65,8 +66,22 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
     }
 
     @Override
-    public File getFile(String fileId) {
-        return mongoDao.findFile(fileId);
+    public File getFile(String fileId) throws FileNotFoundException {
+        File file = mongoDao.findFile(fileId);
+        if (file == null) throw new FileNotFoundException();
+
+        if (rootId.equals(file.getParentId()))
+            file.setParentId(null);
+        return file;
+    }
+
+    @Override
+    public String getFileIdByName(String parentId, String fileName) throws FileNotFoundException {
+        if (parentId == null)
+            parentId = rootId;
+        ChildFile childFile = mongoDao.findChildInParent(parentId, fileName);
+        if (childFile == null) throw new FileNotFoundException();
+        return childFile.getFileId();
     }
 
     @Override
@@ -103,6 +118,8 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
         File destinationFile = mongoDao.findFile(destinationId);
         if (!destinationFile.isDirectory())
             throw new NotDirectoryException("Destination is not a directory");
+
+        //TODO: Moving a parent to its child should not work
 
         File sourceFile = mongoDao.findFile(sourceId);
 
@@ -150,18 +167,21 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
     }
 
     @Override
-    public URL downloadableFileURL(String fileId, long urlExpirySeconds) {
+    public URL downloadableFileURL(String fileId, long urlExpirySeconds) throws FileNotFoundException {
+        if (!flatStorageSystem.exists(fileId)) throw new FileNotFoundException();
         return flatStorageSystem.getObjectURL(fileId, urlExpirySeconds);
     }
 
     @Override
-    public InputStream downloadFile(String fileId) {
+    public InputStream downloadFile(String fileId) throws FileNotFoundException {
+        if (!flatStorageSystem.exists(fileId)) throw new FileNotFoundException();
         return flatStorageSystem.getObject(fileId);
     }
 
     @Override
-    public long getLength(String fileId) {
+    public long getLength(String fileId) throws FileNotFoundException {
         File file = mongoDao.findFile(fileId);
+        if (file == null) throw new FileNotFoundException();
 
         if (file.isDirectory()) {
             long totalLength = 0;
@@ -183,6 +203,16 @@ public class HierarchicalStorageService implements HierarchicalStorageSystem {
         mongoDao.clearAllDocuments();
         flatStorageSystem.clearAll();
         rootId = mongoDao.addFile(createFile(null, "Root", true));
+    }
+
+    @Override
+    public String getFilePath(String fileId) throws FileNotFoundException {
+        if (fileId == null || fileId.equals(rootId)) return "";
+
+        StringBuilder path = new StringBuilder();
+        File file = getFile(fileId);
+        path.append(getFilePath(file.getParentId())).append("/").append(file.getFileName());
+        return path.toString();
     }
 
     private void ensureSameFileNameDoesNotExist(String parentId, String fileName) throws FileAlreadyExistsException {

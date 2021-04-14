@@ -6,6 +6,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOptions;
 import crio.vicara.ChildFile;
 import crio.vicara.File;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,23 @@ public class MongoDataAccessObject {
                 .getInsertedId())
                 .asString()
                 .getValue();
+    }
+
+    String createRootFolderIfDoesNotExist() {
+        BasicDBObject filter = new BasicDBObject()
+                .append("fileName", "Root")
+                .append("parentId", null);
+
+        File previous = fileCollection.find(filter).first();
+        if (previous != null) return previous.getFileId();
+
+        File file = new File();
+        file.setFileId(new ObjectId().toHexString());
+        file.setDirectory(true);
+        file.setCreationTime(System.currentTimeMillis());
+        file.setLastModifiedTime(System.currentTimeMillis());
+        file.setFileName("Root");
+        return addFile(file);
     }
 
     File findFile(String id) {

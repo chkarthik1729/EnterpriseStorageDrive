@@ -1,5 +1,6 @@
 package crio.vicara;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
@@ -15,9 +16,11 @@ public interface HierarchicalStorageSystem {
 
     String createDirectory(String parentId, String directoryName) throws FileAlreadyExistsException;
 
-    File getFile(String fileId);
+    File getFile(String fileId) throws FileNotFoundException;
 
     void delete(String fileId);
+
+    String getFileIdByName(String parentId, String fileName) throws FileNotFoundException;
 
     List<ChildFile> listChildren(String fileId);
 
@@ -29,13 +32,15 @@ public interface HierarchicalStorageSystem {
 
     String uploadFile(String parentId, String fileName, InputStream stream) throws FileAlreadyExistsException;
 
-    URL downloadableFileURL(String fileId, long urlExpirySeconds);
+    URL downloadableFileURL(String fileId, long urlExpirySeconds) throws FileNotFoundException;
 
-    InputStream downloadFile(String fileId);
+    InputStream downloadFile(String fileId) throws FileNotFoundException;
 
-    long getLength(String fileId);
+    long getLength(String fileId) throws FileNotFoundException;
 
     boolean exists(String fileId);
+
+    String getFilePath(String fileId) throws FileNotFoundException;
 
     void clearAll();
 }

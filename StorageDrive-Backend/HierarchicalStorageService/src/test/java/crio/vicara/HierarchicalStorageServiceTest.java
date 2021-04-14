@@ -3,6 +3,8 @@ package crio.vicara;
 import crio.vicara.service.AmazonSimpleStorageService;
 import crio.vicara.service.HierarchicalStorageService;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,12 +26,12 @@ public class HierarchicalStorageServiceTest {
             HierarchicalStorageService.with(AmazonSimpleStorageService.getInstance());
 
     @BeforeEach
-    public void clearStorageService() {
+    public void clearStorageServiceBeforeEachTest() {
         storageService.clearAll();
     }
 
     @Test
-    public void testCreateFolder() throws FileAlreadyExistsException {
+    public void testCreateFolder() throws FileAlreadyExistsException, FileNotFoundException {
         String rootId = storageService.createDirectory(null, "Test");
         assertThrows(FileAlreadyExistsException.class,
                 () -> storageService.createDirectory(null, "Test")
@@ -151,7 +153,7 @@ public class HierarchicalStorageServiceTest {
                 () -> storageService.uploadFile(rootId, file.getName(), stream2)
         );
 
-        assertDoesNotThrow(() -> storageService.uploadFile(rootId, "test1.txt", stream2));
+        Assertions.assertDoesNotThrow(() -> storageService.uploadFile(rootId, "test1.txt", stream2));
     }
 
     @Test
@@ -200,10 +202,37 @@ public class HierarchicalStorageServiceTest {
 
         String uploadedFileId = storageService.uploadFile(null, file.getName(), uploadStream);
 
-        URL downloadURL = storageService.downloadableFileURL(uploadedFileId, 5);
+        URL downloadURL = storageService.downloadableFileURL(uploadedFileId, 10);
         assertTrue(Arrays.equals(testStream.readAllBytes(), downloadURL.openStream().readAllBytes()));
 
-        Thread.sleep(5000);
+        Thread.sleep(10000);
         assertThrows(IOException.class, downloadURL::openStream);
+    }
+
+    @Test
+    public void testGetFileIdByName() throws FileAlreadyExistsException, FileNotFoundException {
+        String test1Id = storageService.createDirectory(null, "Test1");
+        assertEquals(test1Id, storageService.getFileIdByName(null, "Test1"));
+        String test2Id = storageService.createDirectory(test1Id, "Test2");
+        assertEquals(test2Id, storageService.getFileIdByName(test1Id, "Test2"));
+    }
+
+    @Test
+    public void testFilepath() throws FileAlreadyExistsException, FileNotFoundException {
+        String test1Id = storageService.createDirectory(null, "Test1");
+        assertEquals("/Test1", storageService.getFilePath(test1Id));
+        String test2Id = storageService.createDirectory(test1Id, "Test2");
+        assertEquals("/Test1/Test2", storageService.getFilePath(test2Id));
+
+        java.io.File file = new java.io.File("./src/test/resources/test.txt");
+        FileInputStream stream = new FileInputStream(file);
+
+        String uploadedFileId = storageService.uploadFile(test2Id, file.getName(), stream, file.length());
+        assertEquals("/Test1/Test2/test.txt", storageService.getFilePath(uploadedFileId));
+    }
+
+    @AfterEach
+    public void clearStorageServiceAfterEachTest() {
+        storageService.clearAll();
     }
 }
