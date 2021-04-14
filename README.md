@@ -7,6 +7,7 @@ Enterprise Storage Drive is a storage drive service like Google Drive. Our servi
 
 #### Tech Stack:
 **Backend:** Java SpringBoot, MongoDB to store user details and Redis to store Sessions
+
 **Frontend:** HTML, CSS, React
 
 This repository contains both the frontend and backend code. 
